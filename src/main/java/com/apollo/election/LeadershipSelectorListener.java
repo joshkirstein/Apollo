@@ -65,7 +65,7 @@ public class LeadershipSelectorListener extends LeaderSelectorListenerAdapter {
 
     @Override
     public void takeLeadership(CuratorFramework curatorFramework) throws Exception {
-        LOGGER.info("Gained leadership!");
+        LOGGER.info("Gained leadership! [id=" + this.getLeaderId() + "]");
 
         // Tell scheduler we have leadership
         scheduler.takeLeadership();
@@ -74,7 +74,7 @@ public class LeadershipSelectorListener extends LeaderSelectorListenerAdapter {
             // Give up the main threads resources.
             Thread.currentThread().join();
             // Will never reach this point unless interrupted.
-        } catch (InterruptedException e) {
+        } catch (InterruptedException ex) {
             LOGGER.info("Scheduler shutting down.");
             System.exit(1);
         }

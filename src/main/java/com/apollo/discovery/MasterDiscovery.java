@@ -14,8 +14,8 @@ import java.util.function.Function;
 public class MasterDiscovery extends Thread {
     private static final Logger LOGGER = LoggerFactory.getLogger(MasterDiscovery.class);
     private static MasterDiscovery SingletonInstance;
-    // Master sleeps for 2 minutes.
-    private static final long MASTER_DISCOVERY_SLEEP_MILLIS = 1000l * 60l * 2;
+    // Master sleeps for 50 ms.
+    private static final long MASTER_DISCOVERY_SLEEP_MILLIS = 50l;
 
     private String cachedMasterIp = SchedulerConstants.DEFAULT_SCHEDULER_SERVICE_IP;
     private int cachedMasterPort = SchedulerConstants.DEFAULT_SCHEDULER_AGENT_SERVICE_PORT;
@@ -41,8 +41,8 @@ public class MasterDiscovery extends Thread {
 
     public void run() {
         LOGGER.info("MasterDiscovery thread started.");
+        LeadershipSelectorListener listener = new LeadershipSelectorListener(quorumStr, "", null);
         while (true) {
-            LeadershipSelectorListener listener = new LeadershipSelectorListener(quorumStr, "", null);
             String id = listener.getLeaderId();
             if (id != null && !id.equals("")) {
                 String[] spl = id.split(",");
@@ -65,7 +65,7 @@ public class MasterDiscovery extends Thread {
             }
             try {
                 Thread.sleep(MASTER_DISCOVERY_SLEEP_MILLIS);
-            } catch (InterruptedException e) {
+            } catch (InterruptedException ex) {
                 LOGGER.error("MasterDiscovery thread interrupted!");
                 continue;
             }

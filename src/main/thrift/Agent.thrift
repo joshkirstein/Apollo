@@ -37,4 +37,6 @@ service AgentService
     // if called before a purge, timeout will be waited for tasks to be rescheduled
     // if called after a purge, everything should be okay
     Apollo.Response kill(1: Apollo.SchedulerID scheduler),
+    // retrives the ports associated with a task
+    Apollo.Response getTaskPorts(1: Apollo.SchedulerID scheduler, 2: Apollo.TaskID task),
 }

@@ -1,5 +1,6 @@
 package com.apollo.scheduler;
 
+import com.apollo.storage.DistributedLog;
 import com.apollo.thriftgen.*;
 import com.google.common.base.Preconditions;
 import org.slf4j.Logger;
@@ -25,6 +26,30 @@ public class SchedulerStateManager extends Thread {
     public void run() {
         LOGGER.info("SchedulerStateManager thread started.");
         // periodically take a snapshot and backup to distributed fs.
+    }
+
+    public void replay() {
+        LOGGER.info("Loading SchedulerState from snapshot!");
+        synchronized (SCHEDULER_LOCK) {
+            SchedulerState snapshot = DistributedLog.readSnapshot();
+            if (snapshot != null) {
+                state = snapshot;
+                List<Agent> agents = snapshot.getRegisteredAgents();
+                if (agents != null) {
+                    LOGGER.info("Loaded " + agents.size() + " agents.");
+                }
+                List<Task> tasks = snapshot.getTaskList();
+                if (tasks != null) {
+                    LOGGER.info("Loaded " + tasks.size() + " tasks.");
+                }
+            }
+        }
+    }
+
+    public SchedulerState getSchedulerState() {
+        synchronized (SCHEDULER_LOCK) {
+            return state.deepCopy();
+        }
     }
 
     // return a snapshot of the agents when this function is called. (it's a clone)
@@ -81,6 +106,7 @@ public class SchedulerStateManager extends Thread {
                 }
             }
             state.addToTaskList(task);
+            DistributedLog.writeSnapshot(state);
         }
     }
 
@@ -112,10 +138,26 @@ public class SchedulerStateManager extends Thread {
             // shuffle agents
             Collections.shuffle(agents);
 
+            final List<Agent> finAgents = agents;
+
             // get all unassigned tasks and failed tasks, reassign them!
             // TODO: Get tasks that dont have a valid agent assigned.
             // TODO: HANDLE FAILED AND FINISHED TASKS
-            tasks = tasks.stream().filter((task) -> task.getAgentId() == null).collect(Collectors.toList());
+            tasks = tasks.stream().filter((task) -> {
+                // if not assigned an agent
+                boolean needsAssign = task.getAgentId() == null;
+                // or assigned an agent that doesnt exist....
+                if (task.getAgentId() != null) {
+                    boolean found = false;
+                    for (Agent agent : finAgents) {
+                        if (agent.info.getId().equals(task.getAgentId().id)) {
+                            found = true;
+                        }
+                    }
+                    if (!found) needsAssign = true;
+                }
+                return needsAssign && task.getStatus() != TaskStatus.KILLED;
+            }).collect(Collectors.toList());
 
             if (tasks.size() != 0 && agents.size() != 0) {
                 LOGGER.info("Assigning " + tasks.size() + " tasks to some of the " + agents.size() + " agents.");
@@ -123,12 +165,36 @@ public class SchedulerStateManager extends Thread {
                     Task task = tasks.get(i);
                     int agentIdx = i % agents.size();
                     Agent assigned = agents.get(agentIdx);
-                    assignAgentToTask(new TaskID(task.getDescriptor().id), new AgentID(assigned.getInfo().id));
+                    assignAgentToTask(new TaskID(task.getDescriptor().id), new AgentID(assigned.getInfo().id), false);
                     assignments.add(new TaskAssignment(assigned.getInfo(), task.getDescriptor()));
                 }
+                DistributedLog.writeSnapshot(state);
             }
         }
         return assignments;
+    }
+
+    public Agent getOwner(TaskID tid) {
+        Preconditions.checkNotNull(tid, "tid must not be null!");
+        synchronized (SCHEDULER_LOCK) {
+            if (state.getTaskList() != null) {
+                for (Task task : state.getTaskList()) {
+                    if (task.getDescriptor().id.equals(tid.id)) {
+                        AgentID aid = task.getAgentId();
+                        if (aid != null) {
+                            if (state.getRegisteredAgents() != null) {
+                                for (Agent agent : state.getRegisteredAgents()) {
+                                    if (agent.info.getId().equals(aid.id)) {
+                                        return agent;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return null;
     }
 
     // updates all the tasks belonging to this agent as "lost"
@@ -138,20 +204,21 @@ public class SchedulerStateManager extends Thread {
             AgentID agentID = new AgentID(agent.getInfo().id);
             if (state.getTaskList() != null) {
                 for (Task task : state.getTaskList()) {
-                    if (task.getAgentId().equals(agentID)) {
+                    if (task.getAgentId() != null && task.getAgentId().equals(agentID)) {
                         TaskID tid = new TaskID(task.getDescriptor().id);
                         StatusUpdate lostUpdate = new StatusUpdate(System.currentTimeMillis(), TaskStatus.LOST);
                         // add the task update
-                        handleTaskUpdate(agentID, tid, lostUpdate);
+                        handleTaskUpdate(agentID, tid, lostUpdate, false);
                         // unassign agent from this task
-                        assignAgentToTask(tid, null);
+                        assignAgentToTask(tid, null, false);
                     }
                 }
+                DistributedLog.writeSnapshot(state);
             }
         }
     }
 
-    public void assignAgentToTask(TaskID tid, AgentID agent) {
+    public void assignAgentToTask(TaskID tid, AgentID agent, boolean snapshot) {
         Preconditions.checkNotNull(tid, "tid must not be null!");
         // agent may be null (to unassign a task)
         synchronized (SCHEDULER_LOCK) {
@@ -160,6 +227,9 @@ public class SchedulerStateManager extends Thread {
                     if (task.getDescriptor().id.equals(tid.id)) {
                         LOGGER.info("Assigning task [taskID=" + tid + "] to agent " + agent);
                         task.setAgentId(agent);
+                        if (snapshot) {
+                            DistributedLog.writeSnapshot(state);
+                        }
                         return;
                     }
                 }
@@ -169,7 +239,7 @@ public class SchedulerStateManager extends Thread {
 
     // handles a task update by a given agent. if the agent is not responsible for the task,
     // ignore it and return false. otherwise true.
-    public boolean handleTaskUpdate(AgentID aid, TaskID tid, StatusUpdate update) {
+    public boolean handleTaskUpdate(AgentID aid, TaskID tid, StatusUpdate update, boolean snapshot) {
         Preconditions.checkNotNull(aid, "aid must not be null!");
         Preconditions.checkNotNull(tid, "tid must not be null!");
         Preconditions.checkNotNull(update, "update must not be null!");
@@ -180,6 +250,10 @@ public class SchedulerStateManager extends Thread {
                             task.getAgentId().equals(aid)) {
                         LOGGER.info("Updating task status for [taskID=" + tid + "] to status " + update.getStatus());
                         task.addToStatusUpdates(update);
+                        task.setStatus(update.getStatus());
+                        if (snapshot) {
+                            DistributedLog.writeSnapshot(state);
+                        }
                         return true;
                     }
                 }
@@ -215,6 +289,7 @@ public class SchedulerStateManager extends Thread {
         ret = new Agent(descriptor, 0l, 0l);
         synchronized (SCHEDULER_LOCK) {
             state.addToRegisteredAgents(ret);
+            DistributedLog.writeSnapshot(state);
         }
         return ret;
     }

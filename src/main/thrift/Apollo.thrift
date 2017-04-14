@@ -44,9 +44,9 @@ struct TaskID {
 }
 
 enum TaskStatus {
-    STAGING,
-    STARTING,
-    RUNNING,
+    STAGING, // 0, 1, 3, 4, 5 == orange
+    STARTING, // 2 == green
+    RUNNING, // 6, 7, 8, 9, 10 == orange
     KILLING,
     PURGING,
     RESTARTING,
@@ -132,11 +132,26 @@ struct SchedulerVerifyTasksResult {
     1: list<TaskID> verifiedTasks,
 }
 
+struct SchedulerGetTaskPortsResult {
+    1: list<string> portStrings,
+}
+
+struct SchedulerState {
+    1: list<Task> taskList,
+    2: list<Agent> registeredAgents,
+}
+
+struct SchedulerGetStateResult {
+    1: SchedulerState state,
+}
+
 // the result of a service call
 union Result {
     1: AgentRegisterResult agentRegisterResult,
     2: SchedulerRegisterResult schedulerRegisterResult,
     3: SchedulerVerifyTasksResult schedulerVerifyTasksResult,
+    4: SchedulerGetTaskPortsResult schedulerGetTaskPortsResult,
+    5: SchedulerGetStateResult schedulerGetStateResult,
 }
 
 // describes a response from a service call

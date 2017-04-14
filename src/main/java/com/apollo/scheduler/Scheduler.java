@@ -34,7 +34,7 @@ public class Scheduler extends Thread implements SchedulerAgentService.Iface, Sc
     }
 
     public void takeLeadership() {
-        // TODO: stateManager.replay();
+        stateManager.replay();
         isLeader = true;
     }
 
@@ -96,7 +96,7 @@ public class Scheduler extends Thread implements SchedulerAgentService.Iface, Sc
             transport.close();
         } catch (Exception ex) {
             LOGGER.error("Error assigning task to agent! Unassigning.");
-            stateManager.assignAgentToTask(new TaskID(task.id), null);
+            stateManager.assignAgentToTask(new TaskID(task.id), null, true);
         }
     }
 
@@ -117,6 +117,48 @@ public class Scheduler extends Thread implements SchedulerAgentService.Iface, Sc
         } catch (Exception ex) {
             LOGGER.info("Error pinging agent!");
             return false;
+        }
+    }
+
+    private boolean kill(Agent agent, TaskID task) {
+        Preconditions.checkNotNull(agent, "agent must not be null!");
+        Preconditions.checkNotNull(task, "task must not be null!");
+        LOGGER.info("Trying to kill task [taskID=" + task.getId() + "] on agent [agentID=" + agent.getInfo().id + "].");
+        try {
+            TSocket socket = new TSocket(agent.getInfo().ip, agent.getInfo().port);
+            TTransport transport = new TFramedTransport(socket);
+            AgentService.Client client = new AgentService.Client(
+                    new TBinaryProtocol(transport)
+            );
+            transport.open();
+            client.killTask(id, task);
+            transport.close();
+            LOGGER.info("Successfully sent kill message to agent! [agentID=" + agent.getInfo().id + "]");
+            return true;
+        } catch (Exception ex) {
+            LOGGER.info("Error sending kill mesage to agent!");
+            return false;
+        }
+    }
+
+    private Response getTaskPorts(Agent agent, TaskID task) {
+        Preconditions.checkNotNull(agent, "agent must not be null!");
+        Preconditions.checkNotNull(task, "task must not be null!");
+        LOGGER.info("Trying to get task ports [taskID=" + task.getId() + "] on agent [agentID=" + agent.getInfo().id + "].");
+        try {
+            TSocket socket = new TSocket(agent.getInfo().ip, agent.getInfo().port);
+            TTransport transport = new TFramedTransport(socket);
+            AgentService.Client client = new AgentService.Client(
+                    new TBinaryProtocol(transport)
+            );
+            transport.open();
+            Response resp = client.getTaskPorts(id, task);
+            transport.close();
+            LOGGER.info("Successfully sent get task ports to agent! [agentID=" + agent.getInfo().id + "]");
+            return resp;
+        } catch (Exception ex) {
+            LOGGER.info("Error sending get task ports message to agent!");
+            return null;
         }
     }
 
@@ -154,7 +196,7 @@ public class Scheduler extends Thread implements SchedulerAgentService.Iface, Sc
         LOGGER.info("Received UPDATETASKSTATUS() RPC!");
         Response verify = verifyLeader();
         if (verify != null) return verify;
-        boolean allowed = stateManager.handleTaskUpdate(id, task, update);
+        boolean allowed = stateManager.handleTaskUpdate(id, task, update, true);
         if (!allowed) {
             return new Response(ResponseCode.WARNING);
         } else {
@@ -169,7 +211,7 @@ public class Scheduler extends Thread implements SchedulerAgentService.Iface, Sc
         String idStr = UUID.randomUUID().toString();
         TaskID id = new TaskID(idStr);
         taskDesc.setId(idStr);
-        List<StatusUpdate> initStatusList = new ArrayList<StatusUpdate>();
+        List<StatusUpdate> initStatusList = new ArrayList<>();
         initStatusList.add(new StatusUpdate(System.currentTimeMillis(), TaskStatus.STAGING));
         Task task = new Task(taskDesc, null, 0, TaskStatus.STAGING, initStatusList);
         stateManager.registerTask(task);
@@ -177,12 +219,36 @@ public class Scheduler extends Thread implements SchedulerAgentService.Iface, Sc
     }
 
     @Override
-    public Response killTask(TaskID task) throws SchedulerTaskKillException, TException {
+    public Response killTask(TaskID task) throws SchedulerTaskKillException {
         LOGGER.info("Received KILLTASK() RPC!");
         Response verify = verifyLeader();
         if (verify != null) return verify;
-        // TODO...
-        return null;
+        Agent owner = stateManager.getOwner(task);
+        if (owner == null) {
+            LOGGER.info("Tried to kill a task that is not assigned to an owner!");
+            return new Response(ResponseCode.ERROR);
+        }
+        if (!kill(owner, task)) {
+            return new Response(ResponseCode.ERROR);
+        }
+        return new Response(ResponseCode.OK);
+    }
+
+    @Override
+    public Response getTaskPorts(TaskID task) throws TException {
+        LOGGER.info("Received GETTASKPORTS() RPC!");
+        Response verify = verifyLeader();
+        if (verify != null) return verify;
+        Agent owner = stateManager.getOwner(task);
+        if (owner == null) {
+            LOGGER.info("Tried to get task ports of an unassigned task!");
+            return new Response(ResponseCode.ERROR);
+        }
+        Response resp = getTaskPorts(owner, task);
+        if (resp == null) {
+            return new Response(ResponseCode.ERROR);
+        }
+        return resp;
     }
 
     @Override
@@ -197,7 +263,11 @@ public class Scheduler extends Thread implements SchedulerAgentService.Iface, Sc
 
     @Override
     public Response getAllTaskHealth() throws SchedulerTaskStatusRequestException {
-        return null;
+        LOGGER.info("Received GETALLTASKHEALTH() RPC!");
+        Response verify = verifyLeader();
+        if (verify != null) return verify;
+        System.out.println(stateManager.getSchedulerState());
+        return new Response(ResponseCode.OK).setResult(Result.schedulerGetStateResult(new SchedulerGetStateResult(stateManager.getSchedulerState())));
     }
 
     @Override

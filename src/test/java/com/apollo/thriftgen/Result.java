@@ -39,12 +39,16 @@ public class Result extends org.apache.thrift.TUnion<Result, Result._Fields> {
   private static final org.apache.thrift.protocol.TField AGENT_REGISTER_RESULT_FIELD_DESC = new org.apache.thrift.protocol.TField("agentRegisterResult", org.apache.thrift.protocol.TType.STRUCT, (short)1);
   private static final org.apache.thrift.protocol.TField SCHEDULER_REGISTER_RESULT_FIELD_DESC = new org.apache.thrift.protocol.TField("schedulerRegisterResult", org.apache.thrift.protocol.TType.STRUCT, (short)2);
   private static final org.apache.thrift.protocol.TField SCHEDULER_VERIFY_TASKS_RESULT_FIELD_DESC = new org.apache.thrift.protocol.TField("schedulerVerifyTasksResult", org.apache.thrift.protocol.TType.STRUCT, (short)3);
+  private static final org.apache.thrift.protocol.TField SCHEDULER_GET_TASK_PORTS_RESULT_FIELD_DESC = new org.apache.thrift.protocol.TField("schedulerGetTaskPortsResult", org.apache.thrift.protocol.TType.STRUCT, (short)4);
+  private static final org.apache.thrift.protocol.TField SCHEDULER_GET_STATE_RESULT_FIELD_DESC = new org.apache.thrift.protocol.TField("schedulerGetStateResult", org.apache.thrift.protocol.TType.STRUCT, (short)5);
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
     AGENT_REGISTER_RESULT((short)1, "agentRegisterResult"),
     SCHEDULER_REGISTER_RESULT((short)2, "schedulerRegisterResult"),
-    SCHEDULER_VERIFY_TASKS_RESULT((short)3, "schedulerVerifyTasksResult");
+    SCHEDULER_VERIFY_TASKS_RESULT((short)3, "schedulerVerifyTasksResult"),
+    SCHEDULER_GET_TASK_PORTS_RESULT((short)4, "schedulerGetTaskPortsResult"),
+    SCHEDULER_GET_STATE_RESULT((short)5, "schedulerGetStateResult");
 
     private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -65,6 +69,10 @@ public class Result extends org.apache.thrift.TUnion<Result, Result._Fields> {
           return SCHEDULER_REGISTER_RESULT;
         case 3: // SCHEDULER_VERIFY_TASKS_RESULT
           return SCHEDULER_VERIFY_TASKS_RESULT;
+        case 4: // SCHEDULER_GET_TASK_PORTS_RESULT
+          return SCHEDULER_GET_TASK_PORTS_RESULT;
+        case 5: // SCHEDULER_GET_STATE_RESULT
+          return SCHEDULER_GET_STATE_RESULT;
         default:
           return null;
       }
@@ -113,6 +121,10 @@ public class Result extends org.apache.thrift.TUnion<Result, Result._Fields> {
         new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, SchedulerRegisterResult.class)));
     tmpMap.put(_Fields.SCHEDULER_VERIFY_TASKS_RESULT, new org.apache.thrift.meta_data.FieldMetaData("schedulerVerifyTasksResult", org.apache.thrift.TFieldRequirementType.DEFAULT, 
         new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, SchedulerVerifyTasksResult.class)));
+    tmpMap.put(_Fields.SCHEDULER_GET_TASK_PORTS_RESULT, new org.apache.thrift.meta_data.FieldMetaData("schedulerGetTaskPortsResult", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+        new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, SchedulerGetTaskPortsResult.class)));
+    tmpMap.put(_Fields.SCHEDULER_GET_STATE_RESULT, new org.apache.thrift.meta_data.FieldMetaData("schedulerGetStateResult", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+        new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, SchedulerGetStateResult.class)));
     metaDataMap = Collections.unmodifiableMap(tmpMap);
     org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(Result.class, metaDataMap);
   }
@@ -150,6 +162,18 @@ public class Result extends org.apache.thrift.TUnion<Result, Result._Fields> {
     return x;
   }
 
+  public static Result schedulerGetTaskPortsResult(SchedulerGetTaskPortsResult value) {
+    Result x = new Result();
+    x.setSchedulerGetTaskPortsResult(value);
+    return x;
+  }
+
+  public static Result schedulerGetStateResult(SchedulerGetStateResult value) {
+    Result x = new Result();
+    x.setSchedulerGetStateResult(value);
+    return x;
+  }
+
 
   @Override
   protected void checkType(_Fields setField, Object value) throws ClassCastException {
@@ -169,6 +193,16 @@ public class Result extends org.apache.thrift.TUnion<Result, Result._Fields> {
           break;
         }
         throw new ClassCastException("Was expecting value of type SchedulerVerifyTasksResult for field 'schedulerVerifyTasksResult', but got " + value.getClass().getSimpleName());
+      case SCHEDULER_GET_TASK_PORTS_RESULT:
+        if (value instanceof SchedulerGetTaskPortsResult) {
+          break;
+        }
+        throw new ClassCastException("Was expecting value of type SchedulerGetTaskPortsResult for field 'schedulerGetTaskPortsResult', but got " + value.getClass().getSimpleName());
+      case SCHEDULER_GET_STATE_RESULT:
+        if (value instanceof SchedulerGetStateResult) {
+          break;
+        }
+        throw new ClassCastException("Was expecting value of type SchedulerGetStateResult for field 'schedulerGetStateResult', but got " + value.getClass().getSimpleName());
       default:
         throw new IllegalArgumentException("Unknown field id " + setField);
     }
@@ -209,6 +243,26 @@ public class Result extends org.apache.thrift.TUnion<Result, Result._Fields> {
             org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
             return null;
           }
+        case SCHEDULER_GET_TASK_PORTS_RESULT:
+          if (field.type == SCHEDULER_GET_TASK_PORTS_RESULT_FIELD_DESC.type) {
+            SchedulerGetTaskPortsResult schedulerGetTaskPortsResult;
+            schedulerGetTaskPortsResult = new SchedulerGetTaskPortsResult();
+            schedulerGetTaskPortsResult.read(iprot);
+            return schedulerGetTaskPortsResult;
+          } else {
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
+            return null;
+          }
+        case SCHEDULER_GET_STATE_RESULT:
+          if (field.type == SCHEDULER_GET_STATE_RESULT_FIELD_DESC.type) {
+            SchedulerGetStateResult schedulerGetStateResult;
+            schedulerGetStateResult = new SchedulerGetStateResult();
+            schedulerGetStateResult.read(iprot);
+            return schedulerGetStateResult;
+          } else {
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
+            return null;
+          }
         default:
           throw new IllegalStateException("setField wasn't null, but didn't match any of the case statements!");
       }
@@ -232,6 +286,14 @@ public class Result extends org.apache.thrift.TUnion<Result, Result._Fields> {
       case SCHEDULER_VERIFY_TASKS_RESULT:
         SchedulerVerifyTasksResult schedulerVerifyTasksResult = (SchedulerVerifyTasksResult)value_;
         schedulerVerifyTasksResult.write(oprot);
+        return;
+      case SCHEDULER_GET_TASK_PORTS_RESULT:
+        SchedulerGetTaskPortsResult schedulerGetTaskPortsResult = (SchedulerGetTaskPortsResult)value_;
+        schedulerGetTaskPortsResult.write(oprot);
+        return;
+      case SCHEDULER_GET_STATE_RESULT:
+        SchedulerGetStateResult schedulerGetStateResult = (SchedulerGetStateResult)value_;
+        schedulerGetStateResult.write(oprot);
         return;
       default:
         throw new IllegalStateException("Cannot write union with unknown field " + setField_);
@@ -258,6 +320,16 @@ public class Result extends org.apache.thrift.TUnion<Result, Result._Fields> {
           schedulerVerifyTasksResult = new SchedulerVerifyTasksResult();
           schedulerVerifyTasksResult.read(iprot);
           return schedulerVerifyTasksResult;
+        case SCHEDULER_GET_TASK_PORTS_RESULT:
+          SchedulerGetTaskPortsResult schedulerGetTaskPortsResult;
+          schedulerGetTaskPortsResult = new SchedulerGetTaskPortsResult();
+          schedulerGetTaskPortsResult.read(iprot);
+          return schedulerGetTaskPortsResult;
+        case SCHEDULER_GET_STATE_RESULT:
+          SchedulerGetStateResult schedulerGetStateResult;
+          schedulerGetStateResult = new SchedulerGetStateResult();
+          schedulerGetStateResult.read(iprot);
+          return schedulerGetStateResult;
         default:
           throw new IllegalStateException("setField wasn't null, but didn't match any of the case statements!");
       }
@@ -281,6 +353,14 @@ public class Result extends org.apache.thrift.TUnion<Result, Result._Fields> {
         SchedulerVerifyTasksResult schedulerVerifyTasksResult = (SchedulerVerifyTasksResult)value_;
         schedulerVerifyTasksResult.write(oprot);
         return;
+      case SCHEDULER_GET_TASK_PORTS_RESULT:
+        SchedulerGetTaskPortsResult schedulerGetTaskPortsResult = (SchedulerGetTaskPortsResult)value_;
+        schedulerGetTaskPortsResult.write(oprot);
+        return;
+      case SCHEDULER_GET_STATE_RESULT:
+        SchedulerGetStateResult schedulerGetStateResult = (SchedulerGetStateResult)value_;
+        schedulerGetStateResult.write(oprot);
+        return;
       default:
         throw new IllegalStateException("Cannot write union with unknown field " + setField_);
     }
@@ -295,6 +375,10 @@ public class Result extends org.apache.thrift.TUnion<Result, Result._Fields> {
         return SCHEDULER_REGISTER_RESULT_FIELD_DESC;
       case SCHEDULER_VERIFY_TASKS_RESULT:
         return SCHEDULER_VERIFY_TASKS_RESULT_FIELD_DESC;
+      case SCHEDULER_GET_TASK_PORTS_RESULT:
+        return SCHEDULER_GET_TASK_PORTS_RESULT_FIELD_DESC;
+      case SCHEDULER_GET_STATE_RESULT:
+        return SCHEDULER_GET_STATE_RESULT_FIELD_DESC;
       default:
         throw new IllegalArgumentException("Unknown field id " + setField);
     }
@@ -357,6 +441,34 @@ public class Result extends org.apache.thrift.TUnion<Result, Result._Fields> {
     value_ = value;
   }
 
+  public SchedulerGetTaskPortsResult getSchedulerGetTaskPortsResult() {
+    if (getSetField() == _Fields.SCHEDULER_GET_TASK_PORTS_RESULT) {
+      return (SchedulerGetTaskPortsResult)getFieldValue();
+    } else {
+      throw new RuntimeException("Cannot get field 'schedulerGetTaskPortsResult' because union is currently set to " + getFieldDesc(getSetField()).name);
+    }
+  }
+
+  public void setSchedulerGetTaskPortsResult(SchedulerGetTaskPortsResult value) {
+    if (value == null) throw new NullPointerException();
+    setField_ = _Fields.SCHEDULER_GET_TASK_PORTS_RESULT;
+    value_ = value;
+  }
+
+  public SchedulerGetStateResult getSchedulerGetStateResult() {
+    if (getSetField() == _Fields.SCHEDULER_GET_STATE_RESULT) {
+      return (SchedulerGetStateResult)getFieldValue();
+    } else {
+      throw new RuntimeException("Cannot get field 'schedulerGetStateResult' because union is currently set to " + getFieldDesc(getSetField()).name);
+    }
+  }
+
+  public void setSchedulerGetStateResult(SchedulerGetStateResult value) {
+    if (value == null) throw new NullPointerException();
+    setField_ = _Fields.SCHEDULER_GET_STATE_RESULT;
+    value_ = value;
+  }
+
   public boolean isSetAgentRegisterResult() {
     return setField_ == _Fields.AGENT_REGISTER_RESULT;
   }
@@ -369,6 +481,16 @@ public class Result extends org.apache.thrift.TUnion<Result, Result._Fields> {
 
   public boolean isSetSchedulerVerifyTasksResult() {
     return setField_ == _Fields.SCHEDULER_VERIFY_TASKS_RESULT;
+  }
+
+
+  public boolean isSetSchedulerGetTaskPortsResult() {
+    return setField_ == _Fields.SCHEDULER_GET_TASK_PORTS_RESULT;
+  }
+
+
+  public boolean isSetSchedulerGetStateResult() {
+    return setField_ == _Fields.SCHEDULER_GET_STATE_RESULT;
   }
 
 

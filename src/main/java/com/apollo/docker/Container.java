@@ -1,8 +1,11 @@
 package com.apollo.docker;
 
 import com.google.common.base.Preconditions;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 public class Container {
@@ -13,6 +16,10 @@ public class Container {
     private static final String NETWORK_SETTINGS_FIELD = "NetworkSettings";
     private static final String IPADDRESS_FIELD = "IPAddress";
     private static final String STATUS_FIELD = "Status";
+    private static final String PORTS_FIELD = "Ports";
+    private static final String TCP_FIELD = "/tcp";
+    private static final String HOSTIP_FIELD = "HostIp";
+    private static final String HOSTPORT_FIELD = "HostPort";
 
     public enum Status {
         CREATED,
@@ -20,6 +27,7 @@ public class Container {
         RUNNING,
         PAUSED,
         EXITED,
+        REMOVING,
         DEAD;
         public static Status fromString(String str) {
             str = str.toUpperCase();
@@ -36,6 +44,7 @@ public class Container {
     public final Optional<Long> pid;
     public final Optional<String> ipAddress;
     public final Status status;
+    public final List<String> ports;
 
     public Container(String jsonString) {
         Preconditions.checkNotNull(jsonString, "jsonString must not be null!");
@@ -62,6 +71,19 @@ public class Container {
             this.ipAddress = Optional.of(ipAddress);
         }
         this.status = Status.fromString(stateObject.getString(STATUS_FIELD));
+
+        ports = new ArrayList<>();
+        JSONObject portsObject = networkObject.optJSONObject(PORTS_FIELD);
+        if (portsObject != null) {
+            for (String key : portsObject.keySet()) {
+                String port = key.replace(TCP_FIELD, "");
+                JSONArray arr = portsObject.getJSONArray(key);
+                JSONObject portListing = arr.getJSONObject(0);
+                String hostIp = portListing.getString(HOSTIP_FIELD);
+                String hostPort = portListing.getString(HOSTPORT_FIELD);
+                ports.add(hostIp + ":" + hostPort + "->" + port);
+            }
+        }
     }
 
     @Override

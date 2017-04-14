@@ -6,11 +6,6 @@ const string DEFAULT_SCHEDULER_SERVICE_IP = "127.0.0.1";
 const i32 DEFAULT_SCHEDULER_AGENT_SERVICE_PORT = 6666;
 const i32 DEFAULT_SCHEDULER_ADMIN_SERVICE_PORT = 43594;
 
-struct SchedulerState {
-    1: list<Apollo.Task> taskList,
-    2: list<Apollo.Agent> registeredAgents,
-}
-
 exception AgentRegistrationException {
     1: string why,
 }
@@ -67,4 +62,5 @@ service SchedulerAdminService {
     Apollo.Response takeSnapshot() throws (1: SchedulerSnapshotException ex),
     // kills the scheduler (can be done abruptly)
     Apollo.Response kill(),
+    Apollo.Response getTaskPorts(1: Apollo.TaskID task),
 }

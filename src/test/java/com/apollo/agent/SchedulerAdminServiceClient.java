@@ -82,11 +82,14 @@ public class SchedulerAdminServiceClient {
         SchedulerAdminService.Client client = new SchedulerAdminService.Client(protocol);
 
         String loc = "file:///Users/joshuakirstein/Desktop/image.tz";
-        TaskDescriptor desc = new TaskDescriptor("Josh Task", UUID.randomUUID().toString(), new FetcherURI(loc), new HashSet<>());
+        TaskDescriptor desc = new TaskDescriptor("Hello", UUID.randomUUID().toString(), new FetcherURI(loc), new HashSet<>());
         System.out.println("TASK: " + desc);
 
         client.registerTask(desc);
+        //client.killTask(new TaskID("1295fff7-ee70-4cd7-9f0b-ba7297d1f718"));
 
+        /*Response resp = client.getTaskPorts(new TaskID("f0979721-712b-4119-8563-bb0b59a1cb53"));
+        System.out.println(resp.getResult().getSchedulerGetTaskPortsResult().getPortStrings());*/
         transport.close();
     }
 }

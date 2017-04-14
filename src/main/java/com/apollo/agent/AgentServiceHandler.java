@@ -159,7 +159,7 @@ public class AgentServiceHandler extends Thread implements AgentService.Iface {
             LOGGER.info("Connected to the current master successfully! [agentID=" + agent + "]");
             return true;
         } catch (Exception ex) {
-            LOGGER.info("Error connecting to the current master!");
+            LOGGER.info("Error connecting to the current master! IP: " + MasterDiscovery.getSingleton().getMasterIP() + " PORT: " + MasterDiscovery.getSingleton().getMasterPort());
             return false;
         }
     }
@@ -240,10 +240,9 @@ public class AgentServiceHandler extends Thread implements AgentService.Iface {
             }
             TaskExecutor executor = executorMap.get(task);
             executor.killTask();
-            // TODO: remove it from executorMap??
             executorMap.remove(task);
         }
-        return null;
+        return new Response(ResponseCode.OK);
     }
 
     @Override
@@ -278,5 +277,25 @@ public class AgentServiceHandler extends Thread implements AgentService.Iface {
         }
         // TODO: Kill this agent.
         return null;
+    }
+
+    @Override
+    public Response getTaskPorts(SchedulerID scheduler, TaskID task) throws TException {
+        LOGGER.info("Received a GETTASKPORTS() rpc.");
+        Response verify = verifyMaster(scheduler);
+        if (verify != null) {
+            return verify;
+        }
+        synchronized (executorMap) {
+            if (!executorMap.containsKey(task)) {
+                LOGGER.error("Tried to get ports of a task we don't run!");
+                // Don't treat it as an 'error' since the agent didn't error out.
+                // We treat it as an 'invalid request' since that makes more sense.
+                return new Response(ResponseCode.INVALID_REQUEST);
+            }
+            TaskExecutor executor = executorMap.get(task);
+            List<String> strings = executor.getPorts();
+            return new Response(ResponseCode.OK).setResult(Result.schedulerGetTaskPortsResult(new SchedulerGetTaskPortsResult(strings)));
+        }
     }
 }

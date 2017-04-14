@@ -63,6 +63,7 @@ public class DistributedLog {
             TDeserializer deserializer = new TDeserializer(new TJSONProtocol.Factory());
             SchedulerState ret = new SchedulerState();
             deserializer.deserialize(ret, data);
+            inputStream.close();
             return ret;
         } catch (IOException ex) {
             LOGGER.info("Tried to read snapshot when log file doesn't exist!");
@@ -75,17 +76,6 @@ public class DistributedLog {
     }
 
     public static void main(String[] args) throws IOException {
-        File f = new File("/Users/joshuakirstein/Desktop/image.tz");
-        Path path = new Path("/hdfs/images/image2.tz");
-        FSDataOutputStream out = dfs.create(path);
-        BufferedInputStream in = new BufferedInputStream(new FileInputStream(f));
-        byte[] b = new byte[1024];
-        int numBytes = 0;
-        while ((numBytes = in.read(b)) > 0) {
-            out.write(b, 0, numBytes);
-        }
-        in.close();
-        out.close();
-        dfs.close();
+        writeSnapshot(new SchedulerState()); // clear current snapshot
     }
 }

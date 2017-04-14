@@ -15,6 +15,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 
 // executes and monitors a single task
 public class TaskExecutor extends Thread {
@@ -52,6 +54,7 @@ public class TaskExecutor extends Thread {
 
         // Step 1: fetch image
         String urlStr = taskDescriptor.getUrlLocater().getLocater();
+        System.out.println("URL STR: " + urlStr);
         URL url = null;
         File imageFile = null;
         try {
@@ -97,15 +100,45 @@ public class TaskExecutor extends Thread {
             }
 
             // Step 1: Check if container is finished or dead.
+            boolean flag = false;
             String inspect = null;
             try {
                 inspect = docker.inspect(container.name);
             } catch (Exception ex) {
                 updateTaskStatus(TaskStatus.FAILED, ex.getMessage());
-                break;
+                // try and restart it...
+                try {
+                    container = docker.run(image.id);
+                } catch (Exception exx) {
+                    LOGGER.error("Error running docker image.");
+                    exx.printStackTrace();
+                    break;
+                }
+                // if restarted successfully, we update status to running
+                updateTaskStatus(TaskStatus.RUNNING);
             }
-            Container inspected = new Container(inspect);
-            if (inspected.status == Container.Status.EXITED) {
+            if (inspect != null) {
+                Container inspected = new Container(inspect);
+                if (inspected.status == Container.Status.EXITED || inspected.status == Container.Status.DEAD) {
+                    LOGGER.info("TaskExecutor for task [taskID=" + taskDescriptor.id + "] found the container dead! Restarting. [status=" + inspected.status + "]");
+                    updateTaskStatus(TaskStatus.FAILED);
+                    // try and restart it...
+                    try {
+                        docker.rm(inspected.id, true);
+                        container = docker.run(image.id);
+                    } catch (Exception ex) {
+                        LOGGER.error("Error running docker image.");
+                        ex.printStackTrace();
+                        break;
+                    }
+                    // if restarted successfully, we update status to running
+                    updateTaskStatus(TaskStatus.RUNNING);
+                }
+            }
+
+
+            // TODO: Better checking of exited vs failed
+            /*if (inspected.status == Container.Status.EXITED) {
                 LOGGER.info("TaskExecutor for task [taskID=" + taskDescriptor.id + "] found the container finished!");
                 updateTaskStatus(TaskStatus.FINISHED);
                 break;
@@ -121,7 +154,7 @@ public class TaskExecutor extends Thread {
                 }
                 // if restarted successfully, we update status to running
                 updateTaskStatus(TaskStatus.RUNNING);
-            }
+            }*/
 
             // Step 2: Sleep for a little bit to give up
             try {
@@ -131,6 +164,13 @@ public class TaskExecutor extends Thread {
                 continue;
             }
         }
+    }
+
+    public List<String> getPorts() {
+        List<String> ports = new ArrayList<>();
+        String inspect = docker.inspect(container.name);
+        Container inspected = new Container(inspect);
+        return inspected.ports;
     }
 
     private void updateTaskStatus(TaskStatus next) {
