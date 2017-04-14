@@ -1,0 +1,70 @@
+<!doctype html>
+
+<!-- ASSIGN OUR ANGULAR MODULE -->
+<head>
+	<!-- META -->
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1"><!-- Optimize mobile viewport -->
+
+	<title>Apollo Dashboard</title>
+	<link rel="stylesheet" href="http://ajax.googleapis.com/ajax/libs/angular_material/1.1.0/angular-material.min.css">
+	<link rel="stylesheet" href="http://netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css">
+	<style>
+		html 					{ overflow-y:scroll; background-color:#898980; }
+		body 					{ padding-top:50px; background-color:#898980; }
+		#todo-list 				{ margin-bottom:30px; }
+		#todo-form 	 			{ margin-bottom:50px; }
+		#circle {
+	      width: 19px;
+	      height: 19px;
+	      -webkit-border-radius: 40px;
+	      -moz-border-radius: 40px;
+		  border: 1.5px solid black;
+	      border-radius: 40px;
+	      background: red;
+		  float:right;
+		  margin:0px;
+	    }
+	</style>
+
+	<!-- SPELLS -->
+	<script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.5.5/angular.min.js"></script>
+    <script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.5.5/angular-animate.min.js"></script>
+    <script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.5.5/angular-aria.min.js"></script>
+    <script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.5.5/angular-messages.min.js"></script>
+	<script src="http://ajax.googleapis.com/ajax/libs/angular_material/1.1.0/angular-material.min.js"></script>
+	<script src="core.js"></script>
+
+</head>
+<html>
+<!-- SET THE CONTROLLER AND GET ALL TODOS WITH INITIALIZE FUNCTION -->
+<body ng-app = "apolloDash" ng-controller="mainController">
+	<div class="container" id="popupContainer">
+		<h1 class="text-center" style="font-size:80px;margin:-1cm;"> Apollo Dashboard </h1>
+		<!-- Header -->
+		<div class="jumbotron" style="background-color:#898980;border-radius:0px;margin-top:-0.5cm;padding-bottom:1.8cm;padding-top:1.0cm;">
+			<div class="text-center">
+			<h1 style="font-size:50px"><span style="border-radius: 100px;background-color:#48A9A6;color:#343331;" class="label label-info">{{ tasks.length }}</span> task{{tasks.length > 1 ? 's' : ''}} registered</h1>
+			</div>
+			<div style="float:right">
+				<md-button type="submit" style="background-color:#E4DFDA;" class="md-raised" ng-click="newTask()">New Task</md-button>
+			</div>
+		</div>
+
+		<div class='md-padding' layout="row" layout-wrap layout-align="center center">
+		    <md-card style="width: 250px;" ng-repeat="task in tasks">
+		      <img class="md-card">
+		      <md-card-content>
+				<div id="circle" style="background-color:{{task.statusColor}}"></div>
+			    <h2>{{task.text}}     <span ng-show="task.timesince >= 0" style="margin-top:6px;color:black;font-size:15px;font-weight:normal;float:right;">{{ task.timesince | hhmmss}}</span></h2>
+		      </md-card-content>
+		      <div class="md-actions" layout="row" layout-align="end center">
+		        <md-button type="submit" style="background-color:#E4DFDA;" class="md-raised" ng-click="inspectTask(task)">Inspect</md-button>
+		        <md-button type="submit" class="md-raised" style="background-color:#E4DFDA;" ng-click="killTask(task)">Kill</md-button>
+		      </div>
+		    </md-card>
+		  </div>
+	</div>
+
+</body>
+</html>
